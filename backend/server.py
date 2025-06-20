@@ -8,6 +8,10 @@ import logging
 from pathlib import Path
 
 # Import routes
+import sys
+import os
+# Add the current directory to the path so Python can find the modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from routes.playlist import router as playlist_router
 
 ROOT_DIR = Path(__file__).parent
