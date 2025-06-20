@@ -3,6 +3,7 @@ import unittest
 import os
 import json
 from io import BytesIO
+import time
 
 class IPTVPlayerBackendTest(unittest.TestCase):
     def setUp(self):
@@ -14,6 +15,8 @@ class IPTVPlayerBackendTest(unittest.TestCase):
                     break
         
         self.api_url = f"{self.base_url}/api"
+        print(f"Using API URL: {self.api_url}")
+        
         self.sample_m3u_content = """#EXTM3U
 #EXTINF:-1 tvg-id="ESPN.us" tvg-name="ESPN" tvg-logo="https://example.com/espn.png" group-title="Sports",ESPN
 https://example.com/espn/index.m3u8
@@ -24,6 +27,27 @@ https://example.com/hbo/index.m3u8
 """
         self.sample_playlist_url = "https://iptv-org.github.io/iptv/index.m3u"
         self.playlist_ids = []
+        
+        # Wait for backend to be fully ready
+        self._wait_for_backend()
+    
+    def _wait_for_backend(self, max_retries=5, delay=2):
+        """Wait for backend to be ready"""
+        for i in range(max_retries):
+            try:
+                response = requests.get(f"{self.api_url}/health", timeout=5)
+                if response.status_code == 200 and response.json().get("status") == "healthy":
+                    print("Backend is ready!")
+                    return True
+                else:
+                    print(f"Backend not ready yet (attempt {i+1}/{max_retries}), waiting...")
+            except Exception as e:
+                print(f"Error connecting to backend (attempt {i+1}/{max_retries}): {e}")
+            
+            time.sleep(delay)
+        
+        print("WARNING: Backend might not be fully ready, proceeding with tests anyway")
+        return False
 
     def test_01_api_health(self):
         """Test API health endpoints"""
