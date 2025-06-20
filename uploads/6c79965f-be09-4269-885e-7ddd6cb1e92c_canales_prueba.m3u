@@ -1,0 +1,17 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="BigBuckBunny" tvg-name="Big Buck Bunny" tvg-logo="https://via.placeholder.com/100x60/FF6B6B/FFFFFF?text=BBB" group-title="Pruebas",Big Buck Bunny (Prueba)
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+#EXTINF:-1 tvg-id="Sintel" tvg-name="Sintel" tvg-logo="https://via.placeholder.com/100x60/4ECDC4/FFFFFF?text=SIN" group-title="Pruebas",Sintel (Prueba)
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4
+#EXTINF:-1 tvg-id="ElephantsDream" tvg-name="Elephants Dream" tvg-logo="https://via.placeholder.com/100x60/45B7D1/FFFFFF?text=ED" group-title="Pruebas",Elephants Dream (Prueba)
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4
+#EXTINF:-1 tvg-id="NASA" tvg-name="NASA Live" tvg-logo="https://via.placeholder.com/100x60/F7DC6F/000000?text=NASA" group-title="Ciencia",NASA Live
+https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8
+#EXTINF:-1 tvg-id="RT" tvg-name="RT Documentary" tvg-logo="https://via.placeholder.com/100x60/BB8FCE/FFFFFF?text=RT" group-title="Documentales",RT Documentary
+https://rt-rtd.rttv.com/live/rtdoc/playlist.m3u8
+#EXTINF:-1 tvg-id="Bloomberg" tvg-name="Bloomberg TV" tvg-logo="https://via.placeholder.com/100x60/58D68D/FFFFFF?text=BLOOM" group-title="Noticias",Bloomberg TV
+https://bloomberg.com/media-manifest/streams/qt.m3u8
+#EXTINF:-1 tvg-id="RedBull" tvg-name="Red Bull TV" tvg-logo="https://via.placeholder.com/100x60/E74C3C/FFFFFF?text=RB" group-title="Deportes",Red Bull TV
+https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8
+#EXTINF:-1 tvg-id="Euronews" tvg-name="Euronews" tvg-logo="https://via.placeholder.com/100x60/3498DB/FFFFFF?text=EURO" group-title="Noticias",Euronews
+https://rakuten-euronews-1-gb.samsung.wurl.com/manifest/playlist.m3u8
