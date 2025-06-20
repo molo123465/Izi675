@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the complete IPTV Player backend functionality including API health check, playlist upload, playlist from URL, channel management, categories, playlist management, and database operations."
+user_problem_statement: "Test the improved IPTV Player backend with the enhanced M3U parser and streaming functionality."
 
 backend:
   - task: "API Health Check"
@@ -116,6 +116,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "API health endpoints (/api/ and /api/health) are working correctly. Both endpoints return 200 status code with expected response data."
+        - working: true
+          agent: "testing"
+          comment: "Verified API health endpoints are still working correctly after M3U parser enhancements."
 
   - task: "Playlist Upload"
     implemented: true
@@ -128,6 +131,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Playlist upload functionality is working correctly. Successfully uploaded a test M3U file with 3 channels. The API correctly parses the file content and stores it in the database."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced M3U parser correctly handles playlist uploads with real streaming URLs (NASA Live, RT Documentary, Big Buck Bunny). All channels are properly parsed with correct attributes."
 
   - task: "Playlist from URL"
     implemented: true
@@ -140,6 +146,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Adding playlist from URL functionality is working correctly. Successfully added a playlist from a remote URL with over 10,000 channels. The API correctly fetches, parses, and stores the playlist data."
+        - working: true
+          agent: "testing"
+          comment: "Verified that the enhanced M3U parser correctly handles playlists from URLs. The parser now supports multiple encodings and properly validates streaming URLs."
 
   - task: "Channel Management"
     implemented: true
@@ -152,6 +161,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Channel management functionality is working correctly. Successfully retrieved all channels across all playlists. Filtering by category and search functionality are also working as expected."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced channel management correctly handles channels with special characters in names and categories. Filtering and search functionality work properly with the improved parser."
 
   - task: "Categories"
     implemented: true
@@ -164,6 +176,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Categories functionality is working correctly. Successfully retrieved all unique categories from all channels. The API correctly adds 'Todos' as the first category in the list."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced category management correctly extracts and handles categories with special characters (España, France). The API properly filters channels by category."
 
   - task: "Playlist Management"
     implemented: true
@@ -176,6 +191,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Playlist management functionality is working correctly. Successfully retrieved all playlists. The API correctly returns playlist metadata without including channel details."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced playlist management works correctly with the improved M3U parser. Playlists with real streaming URLs are properly managed."
 
   - task: "Database Operations"
     implemented: true
@@ -188,6 +206,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Database operations are working correctly. MongoDB connection is established successfully. Data persistence is verified through multiple API calls that read and write data to the database."
+        - working: true
+          agent: "testing"
+          comment: "Database operations continue to work correctly with the enhanced M3U parser. All channel data including special characters and extended attributes are properly stored and retrieved."
 
   - task: "Error Handling"
     implemented: true
@@ -200,6 +221,33 @@ backend:
         - working: true
           agent: "testing"
           comment: "Error handling is working correctly. The API returns appropriate error responses for invalid playlist IDs, invalid file uploads, and invalid URLs."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced error handling works correctly with the improved M3U parser. The API properly handles invalid file formats and URLs, returning appropriate error responses."
+
+  - task: "Enhanced M3U Parser"
+    implemented: true
+    working: true
+    file: "/app/backend/services/m3u_parser.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "The enhanced M3U parser correctly handles multiple encodings (UTF-8, Latin-1) and properly extracts channel attributes. Special characters in channel names and categories are handled correctly."
+
+  - task: "Streaming URL Validation"
+    implemented: true
+    working: true
+    file: "/app/backend/services/m3u_parser.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "URL validation for various streaming protocols works correctly. The parser properly validates HLS streams (.m3u8), MP4 files, and RTMP streams. Real streaming URLs (NASA Live, RT Documentary, Big Buck Bunny) are correctly validated and parsed."
 
 frontend:
   - task: "Frontend Testing"
@@ -217,18 +265,14 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "API Health Check"
-    - "Playlist Upload"
-    - "Playlist from URL"
-    - "Channel Management"
+    - "Enhanced M3U Parser"
+    - "Streaming URL Validation"
     - "Categories"
-    - "Playlist Management"
-    - "Database Operations"
     - "Error Handling"
   stuck_tasks: []
   test_all: true
@@ -237,3 +281,5 @@ test_plan:
 agent_communication:
     - agent: "testing"
       message: "I've completed comprehensive testing of all backend functionality. All tests are passing successfully. The backend API is fully functional with proper error handling. The only minor issue was with the error handling test where the API returns a 500 status code instead of 400 for invalid file uploads, but this is acceptable as both indicate an error condition."
+    - agent: "testing"
+      message: "I've completed testing of the enhanced M3U parser and streaming functionality. All tests are passing successfully. The parser correctly handles multiple encodings, properly extracts channel attributes, and validates various streaming protocols. Real streaming URLs (NASA Live, RT Documentary, Big Buck Bunny) are correctly parsed and validated. Special characters in channel names and categories are handled properly. The enhanced error handling works correctly for invalid file formats and URLs."
