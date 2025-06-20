@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="Canal1.es" tvg-name="Canal Español" tvg-logo="https://example.com/logo.png" group-title="España",Canal Español con ñ y á é í ó ú
+https://example.com/stream1.m3u8
+#EXTINF:-1 tvg-id="Canal2.fr" tvg-name="Canal Français" tvg-logo="https://example.com/logo2.png" group-title="France",Canal Français avec des caractères spéciaux é è ê ë à
+https://example.com/stream2.m3u8

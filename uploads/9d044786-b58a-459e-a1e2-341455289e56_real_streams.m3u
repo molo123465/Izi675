@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="NASA.us" tvg-name="NASA Live" tvg-logo="https://www.nasa.gov/sites/default/files/thumbnails/image/nasa-logo-web-rgb.png" group-title="Science",NASA Live
+https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8
+#EXTINF:-1 tvg-id="RTDoc.ru" tvg-name="RT Documentary" tvg-logo="https://static.wikia.nocookie.net/logopedia/images/b/b7/RT_Doc.svg" group-title="Documentary",RT Documentary
+https://rt-rtd.rttv.com/live/rtdoc/playlist.m3u8
+#EXTINF:-1 tvg-id="Sample.mp4" tvg-name="Big Buck Bunny" tvg-logo="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg" group-title="Movies",Big Buck Bunny
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4

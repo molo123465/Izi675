@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="ESPN.us" tvg-name="ESPN" tvg-logo="https://example.com/espn.png" group-title="Sports",ESPN
+https://example.com/espn/index.m3u8
+#EXTINF:-1 tvg-id="CNN.us" tvg-name="CNN" tvg-logo="https://example.com/cnn.png" group-title="News",CNN
+https://example.com/cnn/index.m3u8
+#EXTINF:-1 tvg-id="HBO.us" tvg-name="HBO" tvg-logo="https://example.com/hbo.png" group-title="Movies",HBO
+https://example.com/hbo/index.m3u8
