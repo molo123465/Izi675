@@ -130,7 +130,167 @@ rtmp://example.com/live/stream
         self.playlist_ids.append(data["id"])
         print(f"✅ Playlist upload working - Created playlist with ID: {data['id']}")
 
-    def test_03_playlist_from_url(self):
+    def test_03_real_streaming_urls(self):
+        """Test M3U parser with real streaming URLs"""
+        print("\n=== Testing M3U Parser with Real Streaming URLs ===")
+        
+        # Create a file-like object with real streaming URLs
+        m3u_file = BytesIO(self.real_streams_m3u_content.encode('utf-8'))
+        
+        # Prepare the multipart/form-data request
+        files = {
+            'file': ('real_streams.m3u', m3u_file, 'application/octet-stream')
+        }
+        data = {
+            'name': 'Real Streaming URLs Playlist'
+        }
+        
+        # Send the request
+        response = requests.post(
+            f"{self.api_url}/playlists/upload",
+            files=files,
+            data=data
+        )
+        
+        # Check response
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "Real Streaming URLs Playlist")
+        self.assertEqual(data["channel_count"], 3)
+        
+        # Save playlist ID for later tests
+        self.playlist_ids.append(data["id"])
+        print(f"✅ Real streaming URLs parsed successfully - Created playlist with ID: {data['id']}")
+        
+        # Get channels to verify parsing
+        response = requests.get(f"{self.api_url}/playlists/{data['id']}/channels")
+        self.assertEqual(response.status_code, 200)
+        channels = response.json()
+        
+        # Verify channel names and URLs
+        channel_names = [ch["name"] for ch in channels]
+        self.assertIn("NASA Live", channel_names)
+        self.assertIn("RT Documentary", channel_names)
+        self.assertIn("Big Buck Bunny", channel_names)
+        
+        # Verify streaming URLs
+        for channel in channels:
+            if channel["name"] == "NASA Live":
+                self.assertIn("ntv1.akamaized.net/hls/live", channel["url"])
+                self.assertEqual(channel["category"], "Science")
+                print("✅ NASA Live HLS stream correctly parsed")
+            elif channel["name"] == "RT Documentary":
+                self.assertIn("rt-rtd.rttv.com/live/rtdoc", channel["url"])
+                self.assertEqual(channel["category"], "Documentary")
+                print("✅ RT Documentary HLS stream correctly parsed")
+            elif channel["name"] == "Big Buck Bunny":
+                self.assertIn("commondatastorage.googleapis.com", channel["url"])
+                self.assertEqual(channel["category"], "Movies")
+                print("✅ Big Buck Bunny MP4 stream correctly parsed")
+
+    def test_04_encoding_support(self):
+        """Test M3U parser with special characters and different encodings"""
+        print("\n=== Testing M3U Parser Encoding Support ===")
+        
+        # Create a file-like object with special characters
+        m3u_file = BytesIO(self.special_chars_m3u_content.encode('utf-8'))
+        
+        # Prepare the multipart/form-data request
+        files = {
+            'file': ('special_chars.m3u', m3u_file, 'application/octet-stream')
+        }
+        data = {
+            'name': 'Special Characters Playlist'
+        }
+        
+        # Send the request
+        response = requests.post(
+            f"{self.api_url}/playlists/upload",
+            files=files,
+            data=data
+        )
+        
+        # Check response
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "Special Characters Playlist")
+        self.assertEqual(data["channel_count"], 2)
+        
+        # Save playlist ID for later tests
+        self.playlist_ids.append(data["id"])
+        print(f"✅ Special characters support working - Created playlist with ID: {data['id']}")
+        
+        # Get channels to verify parsing
+        response = requests.get(f"{self.api_url}/playlists/{data['id']}/channels")
+        self.assertEqual(response.status_code, 200)
+        channels = response.json()
+        
+        # Verify special characters in channel names
+        channel_names = [ch["name"] for ch in channels]
+        self.assertTrue(any("ñ" in name for name in channel_names))
+        self.assertTrue(any("é" in name for name in channel_names))
+        
+        # Verify categories with special characters
+        categories = [ch["category"] for ch in channels]
+        self.assertIn("España", categories)
+        self.assertIn("France", categories)
+        
+        print("✅ Special characters correctly handled in channel names and categories")
+
+    def test_05_streaming_protocols(self):
+        """Test validation of various streaming protocols"""
+        print("\n=== Testing Streaming Protocol Validation ===")
+        
+        # Create a file-like object with various protocols
+        m3u_file = BytesIO(self.protocols_m3u_content.encode('utf-8'))
+        
+        # Prepare the multipart/form-data request
+        files = {
+            'file': ('protocols.m3u', m3u_file, 'application/octet-stream')
+        }
+        data = {
+            'name': 'Streaming Protocols Playlist'
+        }
+        
+        # Send the request
+        response = requests.post(
+            f"{self.api_url}/playlists/upload",
+            files=files,
+            data=data
+        )
+        
+        # Check response
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "Streaming Protocols Playlist")
+        self.assertEqual(data["channel_count"], 3)
+        
+        # Save playlist ID for later tests
+        self.playlist_ids.append(data["id"])
+        print(f"✅ Streaming protocol validation working - Created playlist with ID: {data['id']}")
+        
+        # Get channels to verify parsing
+        response = requests.get(f"{self.api_url}/playlists/{data['id']}/channels")
+        self.assertEqual(response.status_code, 200)
+        channels = response.json()
+        
+        # Verify different protocols
+        protocols_found = set()
+        for channel in channels:
+            if "m3u8" in channel["url"]:
+                protocols_found.add("HLS")
+            elif "mp4" in channel["url"]:
+                protocols_found.add("MP4")
+            elif "rtmp:" in channel["url"]:
+                protocols_found.add("RTMP")
+        
+        self.assertIn("HLS", protocols_found)
+        self.assertIn("MP4", protocols_found)
+        self.assertIn("RTMP", protocols_found)
+        
+        print(f"✅ Successfully validated different streaming protocols: {', '.join(protocols_found)}")
+
+    def test_06_playlist_from_url(self):
         """Test adding playlist from URL"""
         print("\n=== Testing Playlist from URL ===")
         
@@ -159,7 +319,7 @@ rtmp://example.com/live/stream
             print(f"⚠️ Playlist from URL test skipped - Status code: {response.status_code}, Response: {response.text}")
             print("This might be due to network restrictions or the sample URL being unavailable")
 
-    def test_04_get_playlists(self):
+    def test_07_get_playlists(self):
         """Test getting all playlists"""
         print("\n=== Testing Get Playlists ===")
         
@@ -181,7 +341,59 @@ rtmp://example.com/live/stream
         
         print(f"✅ Get playlists working - Found {len(data)} playlists")
 
-    def test_05_get_channels(self):
+    def test_08_category_management(self):
+        """Test category extraction and filtering"""
+        print("\n=== Testing Category Management ===")
+        
+        # Get all categories
+        response = requests.get(f"{self.api_url}/playlists/categories")
+        self.assertEqual(response.status_code, 200)
+        categories = response.json()
+        
+        # Verify "Todos" is the first category
+        self.assertTrue(len(categories) > 0)
+        self.assertEqual(categories[0], "Todos")
+        
+        # Verify our test categories are present
+        expected_categories = ["Sports", "News", "Movies", "Science", "Documentary", "Protocols", "España", "France"]
+        for category in expected_categories:
+            if category in categories:
+                print(f"✅ Found category: {category}")
+            else:
+                print(f"❌ Missing category: {category}")
+        
+        # Test filtering by category
+        if len(self.playlist_ids) > 0:
+            playlist_id = self.playlist_ids[0]  # Use the first playlist
+            
+            # Get all channels from the playlist
+            response = requests.get(f"{self.api_url}/playlists/{playlist_id}/channels")
+            self.assertEqual(response.status_code, 200)
+            all_channels = response.json()
+            
+            # Get a category from the first channel
+            if all_channels:
+                category = all_channels[0]["category"]
+                
+                # Filter by that category
+                response = requests.get(f"{self.api_url}/playlists/{playlist_id}/channels?category={category}")
+                self.assertEqual(response.status_code, 200)
+                filtered_channels = response.json()
+                
+                # Verify all returned channels have the correct category
+                self.assertTrue(all(ch["category"] == category for ch in filtered_channels))
+                print(f"✅ Category filtering working - Found {len(filtered_channels)} channels in category '{category}'")
+                
+                # Test filtering across all playlists
+                response = requests.get(f"{self.api_url}/playlists/channels?category={category}")
+                self.assertEqual(response.status_code, 200)
+                all_filtered_channels = response.json()
+                
+                # Verify all returned channels have the correct category
+                self.assertTrue(all(ch["category"] == category for ch in all_filtered_channels))
+                print(f"✅ Global category filtering working - Found {len(all_filtered_channels)} channels in category '{category}' across all playlists")
+
+    def test_09_get_channels(self):
         """Test getting channels from a playlist"""
         print("\n=== Testing Get Channels ===")
         
@@ -221,7 +433,7 @@ rtmp://example.com/live/stream
             self.assertIsInstance(search_data, list)
             print(f"✅ Channel search working - Found {len(search_data)} channels matching '{search_term}'")
 
-    def test_06_get_all_channels(self):
+    def test_10_get_all_channels(self):
         """Test getting all channels from all playlists"""
         print("\n=== Testing Get All Channels ===")
         
@@ -254,25 +466,7 @@ rtmp://example.com/live/stream
             self.assertIsInstance(search_data, list)
             print(f"✅ All channels search working - Found {len(search_data)} channels matching '{search_term}'")
 
-    def test_07_get_categories(self):
-        """Test getting all unique categories"""
-        print("\n=== Testing Get Categories ===")
-        
-        # Send the request
-        response = requests.get(f"{self.api_url}/playlists/categories")
-        
-        # Check response
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIsInstance(data, list)
-        
-        # Verify "Todos" is the first category
-        if data:
-            self.assertEqual(data[0], "Todos")
-        
-        print(f"✅ Get categories working - Found {len(data)} unique categories")
-
-    def test_08_refresh_playlist(self):
+    def test_11_refresh_playlist(self):
         """Test refreshing a playlist from URL"""
         print("\n=== Testing Playlist Refresh ===")
         
@@ -297,38 +491,8 @@ rtmp://example.com/live/stream
         else:
             self.fail(f"Playlist refresh failed with status code {response.status_code}: {response.text}")
 
-    def test_09_delete_playlist(self):
-        """Test deleting a playlist"""
-        print("\n=== Testing Playlist Deletion ===")
-        
-        if not self.playlist_ids:
-            print("⚠️ No playlists available for deletion test")
-            return
-        
-        # Delete the first playlist
-        playlist_id = self.playlist_ids[0]
-        
-        # Send the request
-        response = requests.delete(f"{self.api_url}/playlists/{playlist_id}")
-        
-        # Check response
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["message"], "Playlist eliminada exitosamente")
-        
-        # Verify playlist is deleted
-        response = requests.get(f"{self.api_url}/playlists/")
-        playlists = response.json()
-        playlist_ids = [p["id"] for p in playlists]
-        self.assertNotIn(playlist_id, playlist_ids)
-        
-        print(f"✅ Playlist deletion working - Deleted playlist {playlist_id}")
-        
-        # Remove the deleted playlist ID from our list
-        self.playlist_ids.remove(playlist_id)
-
-    def test_10_error_handling(self):
-        """Test error handling for invalid inputs"""
+    def test_12_error_handling(self):
+        """Test error handling for various file formats and invalid URLs"""
         print("\n=== Testing Error Handling ===")
         
         # Test invalid playlist ID
@@ -362,6 +526,44 @@ rtmp://example.com/live/stream
         # This should either return 400 or 500 depending on how the server handles invalid URLs
         self.assertIn(response.status_code, [400, 500])
         print("✅ Error handling for invalid URL working")
+        
+        # Test invalid category
+        if self.playlist_ids:
+            playlist_id = self.playlist_ids[0]
+            response = requests.get(f"{self.api_url}/playlists/{playlist_id}/channels?category=NonexistentCategory")
+            self.assertEqual(response.status_code, 200)
+            channels = response.json()
+            self.assertEqual(len(channels), 0)
+            print("✅ Error handling for invalid category working")
+
+    def test_13_delete_playlist(self):
+        """Test deleting a playlist"""
+        print("\n=== Testing Playlist Deletion ===")
+        
+        if not self.playlist_ids:
+            print("⚠️ No playlists available for deletion test")
+            return
+        
+        # Delete all created playlists
+        for playlist_id in self.playlist_ids[:]:
+            # Send the request
+            response = requests.delete(f"{self.api_url}/playlists/{playlist_id}")
+            
+            # Check response
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data["message"], "Playlist eliminada exitosamente")
+            
+            # Verify playlist is deleted
+            response = requests.get(f"{self.api_url}/playlists/")
+            playlists = response.json()
+            playlist_ids = [p["id"] for p in playlists]
+            self.assertNotIn(playlist_id, playlist_ids)
+            
+            print(f"✅ Playlist deletion working - Deleted playlist {playlist_id}")
+            
+            # Remove the deleted playlist ID from our list
+            self.playlist_ids.remove(playlist_id)
 
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
