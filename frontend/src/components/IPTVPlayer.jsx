@@ -8,6 +8,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
 import { 
   Play, 
   Pause, 
@@ -22,19 +23,24 @@ import {
   Menu,
   Search,
   X,
-  RotateCcw
+  RotateCcw,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
-import { mockChannels, mockCategories, mockPlaylists } from '../mock/mockData';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const IPTVPlayer = () => {
-  const [channels, setChannels] = useState(mockChannels);
+  const [channels, setChannels] = useState([]);
   const [currentChannel, setCurrentChannel] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [categories, setCategories] = useState(['Todos']);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [searchTerm, setSearchTerm] = useState('');
-  const [playlists, setPlaylists] = useState(mockPlaylists);
+  const [playlists, setPlaylists] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [showChannelList, setShowChannelList] = useState(false);
@@ -44,6 +50,59 @@ const IPTVPlayer = () => {
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
   const { toast } = useToast();
+
+  // Load initial data
+  useEffect(() => {
+    loadPlaylists();
+    loadChannels();
+    loadCategories();
+  }, []);
+
+  const loadPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/playlists/`);
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error('Error loading playlists:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las listas",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadChannels = async () => {
+    try {
+      const response = await axios.get(`${API}/playlists/channels`, {
+        params: {
+          category: selectedCategory !== 'Todos' ? selectedCategory : undefined,
+          search: searchTerm || undefined
+        }
+      });
+      setChannels(response.data);
+    } catch (error) {
+      console.error('Error loading channels:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/playlists/categories`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  // Reload channels when filters change
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      loadChannels();
+    }, 300);
+
+    return () => clearTimeout(delayedSearch);
+  }, [selectedCategory, searchTerm]);
 
   const filteredChannels = channels.filter(channel => {
     const matchesCategory = selectedCategory === 'Todos' || channel.category === selectedCategory;
@@ -98,23 +157,36 @@ const IPTVPlayer = () => {
           description: `Procesando lista: ${fileName}`,
         });
         
-        // Simular carga y procesamiento
-        setTimeout(() => {
-          const newPlaylist = {
-            id: playlists.length + 1,
-            name: fileName,
-            url: `uploaded/${fileName}`,
-            channelCount: Math.floor(Math.random() * 200) + 50,
-            lastUpdated: new Date().toISOString()
-          };
-          setPlaylists([...playlists, newPlaylist]);
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('name', fileName);
+
+          const response = await axios.post(`${API}/playlists/upload`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+
+          await loadPlaylists();
+          await loadChannels();
+          await loadCategories();
+          
           setShowUpload(false);
-          setIsLoading(false);
           toast({
             title: "✅ Archivo procesado",
-            description: `${newPlaylist.channelCount} canales agregados exitosamente`,
+            description: `${response.data.channel_count} canales agregados exitosamente`,
           });
-        }, 2000);
+        } catch (error) {
+          console.error('Error uploading file:', error);
+          toast({
+            title: "Error",
+            description: error.response?.data?.detail || "Error al procesar el archivo",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         toast({
           title: "Error",
@@ -134,24 +206,32 @@ const IPTVPlayer = () => {
           description: "Descargando lista desde URL",
         });
         
-        // Simular procesamiento de URL
-        setTimeout(() => {
-          const newPlaylist = {
-            id: playlists.length + 1,
-            name: `Lista desde URL`,
-            url: urlInput,
-            channelCount: Math.floor(Math.random() * 300) + 100,
-            lastUpdated: new Date().toISOString()
-          };
-          setPlaylists([...playlists, newPlaylist]);
+        try {
+          const response = await axios.post(`${API}/playlists/url`, {
+            name: `Lista desde URL - ${new Date().toLocaleDateString()}`,
+            url: urlInput
+          });
+
+          await loadPlaylists();
+          await loadChannels();
+          await loadCategories();
+          
           setUrlInput('');
           setShowUpload(false);
-          setIsLoading(false);
           toast({
             title: "✅ URL procesada",
-            description: `${newPlaylist.channelCount} canales agregados desde URL`,
+            description: `${response.data.channel_count} canales agregados desde URL`,
           });
-        }, 2500);
+        } catch (error) {
+          console.error('Error processing URL:', error);
+          toast({
+            title: "Error",
+            description: error.response?.data?.detail || "Error al procesar la URL",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         toast({
           title: "Error",
@@ -159,6 +239,49 @@ const IPTVPlayer = () => {
           variant: "destructive"
         });
       }
+    }
+  };
+
+  const handleDeletePlaylist = async (playlistId) => {
+    try {
+      await axios.delete(`${API}/playlists/${playlistId}`);
+      await loadPlaylists();
+      await loadChannels();
+      await loadCategories();
+      toast({
+        title: "Lista eliminada",
+        description: "La playlist ha sido eliminada exitosamente",
+      });
+    } catch (error) {
+      console.error('Error deleting playlist:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la playlist",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRefreshPlaylist = async (playlistId) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.put(`${API}/playlists/${playlistId}/refresh`);
+      await loadPlaylists();
+      await loadChannels();
+      await loadCategories();
+      toast({
+        title: "Lista actualizada",
+        description: `${response.data.channel_count} canales actualizados`,
+      });
+    } catch (error) {
+      console.error('Error refreshing playlist:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "No se pudo actualizar la playlist",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,7 +300,7 @@ const IPTVPlayer = () => {
   const ChannelList = ({ isMobile = false }) => (
     <div className={`${isMobile ? 'h-full' : ''}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Canales</h2>
+        <h2 className="text-lg font-semibold">Canales ({filteredChannels.length})</h2>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -276,7 +399,7 @@ const IPTVPlayer = () => {
       {/* Categories */}
       <ScrollArea className="h-16 mb-4">
         <div className="flex space-x-2 pb-2">
-          {mockCategories.map((category) => (
+          {categories.map((category) => (
             <Button
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
@@ -298,37 +421,54 @@ const IPTVPlayer = () => {
       {/* Channel List */}
       <ScrollArea className={`${isMobile ? 'h-96' : 'h-80'}`}>
         <div className="space-y-2">
-          {filteredChannels.map((channel) => (
-            <Card
-              key={channel.id}
-              className={`cursor-pointer transition-all duration-200 ${
-                currentChannel?.id === channel.id
-                  ? 'bg-purple-600/40 border-purple-400'
-                  : 'bg-black/20 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-400/50'
-              }`}
-              onClick={() => handleChannelSelect(channel)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-3">
-                  <img
-                    src={channel.logo}
-                    alt={channel.name}
-                    className="w-12 h-8 object-cover rounded flex-shrink-0"
-                  />
-                  <div className="flex-grow min-w-0">
-                    <h4 className="font-medium truncate text-sm">{channel.name}</h4>
-                    <p className="text-xs text-gray-400">{channel.category}</p>
+          {filteredChannels.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Tv className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No hay canales disponibles</p>
+              <p className="text-sm">Agrega una playlist para comenzar</p>
+            </div>
+          ) : (
+            filteredChannels.map((channel) => (
+              <Card
+                key={channel.id}
+                className={`cursor-pointer transition-all duration-200 ${
+                  currentChannel?.id === channel.id
+                    ? 'bg-purple-600/40 border-purple-400'
+                    : 'bg-black/20 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-400/50'
+                }`}
+                onClick={() => handleChannelSelect(channel)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-8 bg-purple-500/20 rounded flex items-center justify-center flex-shrink-0">
+                      {channel.logo ? (
+                        <img
+                          src={channel.logo}
+                          alt={channel.name}
+                          className="w-full h-full object-cover rounded"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <Tv className="w-4 h-4 text-purple-400" style={{ display: channel.logo ? 'none' : 'flex' }} />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <h4 className="font-medium truncate text-sm">{channel.name}</h4>
+                      <p className="text-xs text-gray-400">{channel.category}</p>
+                    </div>
+                    <Badge 
+                      variant={channel.is_live ? "default" : "secondary"}
+                      className="text-xs flex-shrink-0"
+                    >
+                      {channel.is_live ? 'LIVE' : 'OFF'}
+                    </Badge>
                   </div>
-                  <Badge 
-                    variant={channel.isLive ? "default" : "secondary"}
-                    className="text-xs flex-shrink-0"
-                  >
-                    {channel.isLive ? 'LIVE' : 'OFF'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </ScrollArea>
     </div>
@@ -377,6 +517,7 @@ const IPTVPlayer = () => {
                         controls={false}
                         playsInline
                         webkit-playsinline
+                        src={currentChannel.url}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-2 lg:bottom-4 left-2 lg:left-4 right-2 lg:right-4">
@@ -387,9 +528,9 @@ const IPTVPlayer = () => {
                             </h3>
                             <p className="text-xs lg:text-sm text-gray-300">{currentChannel.category}</p>
                           </div>
-                          <Badge variant={currentChannel.isLive ? "default" : "secondary"}>
-                            {currentChannel.isLive ? <Signal className="w-3 h-3 mr-1" /> : <SignalZero className="w-3 h-3 mr-1" />}
-                            {currentChannel.isLive ? 'LIVE' : 'OFF'}
+                          <Badge variant={currentChannel.is_live ? "default" : "secondary"}>
+                            {currentChannel.is_live ? <Signal className="w-3 h-3 mr-1" /> : <SignalZero className="w-3 h-3 mr-1" />}
+                            {currentChannel.is_live ? 'LIVE' : 'OFF'}
                           </Badge>
                         </div>
                       </div>
@@ -492,25 +633,56 @@ const IPTVPlayer = () => {
         <div className="mt-8 order-3">
           <Card className="bg-black/40 border-purple-500/30 backdrop-blur-lg">
             <CardHeader>
-              <CardTitle className="text-lg lg:text-xl">Mis Listas</CardTitle>
+              <CardTitle className="text-lg lg:text-xl">Mis Listas ({playlists.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {playlists.map((playlist) => (
-                  <Card
-                    key={playlist.id}
-                    className="bg-black/20 border-purple-500/20 hover:bg-purple-500/10 transition-colors cursor-pointer"
-                  >
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold mb-2 text-sm lg:text-base truncate">{playlist.name}</h3>
-                      <div className="text-xs lg:text-sm text-gray-400 space-y-1">
-                        <p>{playlist.channelCount} canales</p>
-                        <p>Actualizado: {new Date(playlist.lastUpdated).toLocaleDateString()}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {playlists.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Upload className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No hay listas agregadas</p>
+                  <p className="text-sm">Sube un archivo M3U o agrega una URL para comenzar</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {playlists.map((playlist) => (
+                    <Card
+                      key={playlist.id}
+                      className="bg-black/20 border-purple-500/20 hover:bg-purple-500/10 transition-colors"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-sm lg:text-base truncate flex-grow">{playlist.name}</h3>
+                          <div className="flex space-x-1 ml-2">
+                            {playlist.url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRefreshPlaylist(playlist.id)}
+                                className="p-1 h-6 w-6"
+                                disabled={isLoading}
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeletePlaylist(playlist.id)}
+                              className="p-1 h-6 w-6 text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="text-xs lg:text-sm text-gray-400 space-y-1">
+                          <p>{playlist.channel_count} canales</p>
+                          <p>Actualizado: {new Date(playlist.last_updated).toLocaleDateString()}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
