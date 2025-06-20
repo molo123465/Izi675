@@ -17,6 +17,7 @@ class IPTVPlayerBackendTest(unittest.TestCase):
         self.api_url = f"{self.base_url}/api"
         print(f"Using API URL: {self.api_url}")
         
+        # Sample M3U content with example channels
         self.sample_m3u_content = """#EXTM3U
 #EXTINF:-1 tvg-id="ESPN.us" tvg-name="ESPN" tvg-logo="https://example.com/espn.png" group-title="Sports",ESPN
 https://example.com/espn/index.m3u8
@@ -25,6 +26,34 @@ https://example.com/cnn/index.m3u8
 #EXTINF:-1 tvg-id="HBO.us" tvg-name="HBO" tvg-logo="https://example.com/hbo.png" group-title="Movies",HBO
 https://example.com/hbo/index.m3u8
 """
+        # Sample M3U content with real streaming URLs
+        self.real_streams_m3u_content = """#EXTM3U
+#EXTINF:-1 tvg-id="NASA.us" tvg-name="NASA Live" tvg-logo="https://www.nasa.gov/sites/default/files/thumbnails/image/nasa-logo-web-rgb.png" group-title="Science",NASA Live
+https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8
+#EXTINF:-1 tvg-id="RTDoc.ru" tvg-name="RT Documentary" tvg-logo="https://static.wikia.nocookie.net/logopedia/images/b/b7/RT_Doc.svg" group-title="Documentary",RT Documentary
+https://rt-rtd.rttv.com/live/rtdoc/playlist.m3u8
+#EXTINF:-1 tvg-id="Sample.mp4" tvg-name="Big Buck Bunny" tvg-logo="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg" group-title="Movies",Big Buck Bunny
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+"""
+
+        # Sample M3U content with different encodings and attributes
+        self.special_chars_m3u_content = """#EXTM3U
+#EXTINF:-1 tvg-id="Canal1.es" tvg-name="Canal Español" tvg-logo="https://example.com/logo.png" group-title="España",Canal Español con ñ y á é í ó ú
+https://example.com/stream1.m3u8
+#EXTINF:-1 tvg-id="Canal2.fr" tvg-name="Canal Français" tvg-logo="https://example.com/logo2.png" group-title="France",Canal Français avec des caractères spéciaux é è ê ë à
+https://example.com/stream2.m3u8
+"""
+
+        # Sample M3U content with various streaming protocols
+        self.protocols_m3u_content = """#EXTM3U
+#EXTINF:-1 tvg-id="HLS.stream" tvg-name="HLS Stream" tvg-logo="https://example.com/hls.png" group-title="Protocols",HLS Stream
+https://example.com/stream/playlist.m3u8
+#EXTINF:-1 tvg-id="MP4.video" tvg-name="MP4 Video" tvg-logo="https://example.com/mp4.png" group-title="Protocols",MP4 Video
+https://example.com/video.mp4
+#EXTINF:-1 tvg-id="RTMP.stream" tvg-name="RTMP Stream" tvg-logo="https://example.com/rtmp.png" group-title="Protocols",RTMP Stream
+rtmp://example.com/live/stream
+"""
+        
         self.sample_playlist_url = "https://iptv-org.github.io/iptv/index.m3u"
         self.playlist_ids = []
         
