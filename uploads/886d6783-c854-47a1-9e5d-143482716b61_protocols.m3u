@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="HLS.stream" tvg-name="HLS Stream" tvg-logo="https://example.com/hls.png" group-title="Protocols",HLS Stream
+https://example.com/stream/playlist.m3u8
+#EXTINF:-1 tvg-id="MP4.video" tvg-name="MP4 Video" tvg-logo="https://example.com/mp4.png" group-title="Protocols",MP4 Video
+https://example.com/video.mp4
+#EXTINF:-1 tvg-id="RTMP.stream" tvg-name="RTMP Stream" tvg-logo="https://example.com/rtmp.png" group-title="Protocols",RTMP Stream
+rtmp://example.com/live/stream
